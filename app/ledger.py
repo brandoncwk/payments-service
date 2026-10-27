@@ -3,6 +3,7 @@ import sqlite3
 
 def get_connection(path=":memory:"):
     conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
@@ -36,7 +37,7 @@ def create_account(conn, name):
     return cur.lastrowid
 
 
-def record_transaction(conn, description, entries):
+def record_transaction(conn, description, entries, commit=True):
     """entries is a list of (account_id, amount_cents) tuples."""
     if len(entries) < 2:
         raise ValueError("A transaction needs at least 2 entries")
@@ -51,7 +52,8 @@ def record_transaction(conn, description, entries):
         "INSERT INTO entries (transaction_id, account_id, amount_cents) VALUES (?, ?, ?)",
         [(txn_id, account_id, amount) for account_id, amount in entries],
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return txn_id
 
 
